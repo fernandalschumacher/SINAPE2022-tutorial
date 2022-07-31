@@ -11,90 +11,6 @@ Tutorial: Modeling Longitudinal Data using Robust Mixed Models in R
 Authors: Fernanda Lang Schumacher, Larissa Avila Matos, and Victor Hugo Lachos
 
 
-```
-FALSE -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
-```
-
-```
-FALSE v ggplot2 3.3.5     v purrr   0.3.4
-FALSE v tibble  3.1.6     v dplyr   1.0.7
-FALSE v tidyr   1.1.4     v stringr 1.4.0
-FALSE v readr   2.1.1     v forcats 0.5.1
-```
-
-```
-FALSE -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-FALSE x dplyr::filter() masks stats::filter()
-FALSE x dplyr::lag()    masks stats::lag()
-```
-
-```
-FALSE Carregando pacotes exigidos: optimParallel
-```
-
-```
-FALSE Carregando pacotes exigidos: parallel
-```
-
-```
-FALSE 
-FALSE Attaching package: 'nlme'
-```
-
-```
-FALSE The following object is masked from 'package:skewlmm':
-FALSE 
-FALSE     ranef
-```
-
-```
-FALSE The following object is masked from 'package:dplyr':
-FALSE 
-FALSE     collapse
-```
-
-```
-FALSE Carregando pacotes exigidos: Matrix
-```
-
-```
-FALSE 
-FALSE Attaching package: 'Matrix'
-```
-
-```
-FALSE The following objects are masked from 'package:tidyr':
-FALSE 
-FALSE     expand, pack, unpack
-```
-
-```
-FALSE 
-FALSE Attaching package: 'lme4'
-```
-
-```
-FALSE The following object is masked from 'package:nlme':
-FALSE 
-FALSE     lmList
-```
-
-```
-FALSE The following object is masked from 'package:skewlmm':
-FALSE 
-FALSE     ranef
-```
-
-```
-FALSE 
-FALSE Attaching package: 'gridExtra'
-```
-
-```
-FALSE The following object is masked from 'package:dplyr':
-FALSE 
-FALSE     combine
-```
 
 
 ```r
@@ -122,10 +38,10 @@ library(knitr)
 ############################################################################################
 # sleepstudy data
 
-# The average reaction time per day for subjects was evaluated by Gregory et al. (2003) 
-# in a sleep deprivation study. On day 0 the subjects had their normal amount of sleep 
-# and starting that night they were restricted to 3 hours of sleep per night for 9 days, 
-# and the reaction time basead on a series of tests was measured on each day for each subject. 
+# The average reaction time per day for subjects was evaluated by Gregory et al. (2003)
+# in a sleep deprivation study. On day 0 the subjects had their normal amount of sleep
+# and starting that night they were restricted to 3 hours of sleep per night for 9 days,
+# and the reaction time basead on a series of tests was measured on each day for each subject.
 # The data are avaliable at the R package lme4.
 
 data("sleepstudy",package = "lme4")
@@ -141,10 +57,10 @@ sleepstudy %>% glimpse()
 ```
 
 ```r
-# centering time in 0 and excluding the first 2 days 
+# centering time in 0 and excluding the first 2 days
 sleepstudy <- subset(sleepstudy,Days>=2) %>% transform(Dayst = Days - 5.5)
 
-ggplot(sleepstudy,aes(x=Days,y=Reaction,group=Subject)) + geom_line(alpha=.4) + 
+ggplot(sleepstudy,aes(x=Days,y=Reaction,group=Subject)) + geom_line(alpha=.4) +
   stat_summary(aes(group = 1),geom = "line", fun= mean, colour=1,size=1) +
   scale_x_continuous()+ylab("reaction time")+xlab("days")+
   theme_minimal()
@@ -181,15 +97,15 @@ fitlme
 
 ```r
 # plotting the estimated random effects
-g1<-nlme::ranef(fitlme) %>% dplyr::rename(`intercepts`=`(Intercept)`,`slopes`=Dayst) %>% 
-  pivot_longer(cols = everything()) %>% 
-  ggplot(aes(x=value))+ 
+g1<-nlme::ranef(fitlme) %>% dplyr::rename(`intercepts`=`(Intercept)`,`slopes`=Dayst) %>%
+  pivot_longer(cols = everything()) %>%
+  ggplot(aes(x=value))+
   geom_histogram(bins=7,aes(y=..density..)) +
-  theme_minimal()+ 
-  facet_wrap(~name,scales = "free")+xlab('')+ylab('density') 
+  theme_minimal()+
+  facet_wrap(~name,scales = "free")+xlab('')+ylab('density')
 
-g2<-nlme::ranef(fitlme) %>% dplyr::rename(`intercepts`=`(Intercept)`, `slopes`=Dayst) %>% 
-  pivot_longer(cols = everything()) %>% 
+g2<-nlme::ranef(fitlme) %>% dplyr::rename(`intercepts`=`(Intercept)`, `slopes`=Dayst) %>%
+  pivot_longer(cols = everything()) %>%
   ggplot(aes(sample=value))+
   geom_qq() + geom_qq_line()+
   facet_wrap(~name,scales = 'free')+theme_minimal()
@@ -200,7 +116,7 @@ gridExtra::grid.arrange(g1,g2,ncol=1)
 ![](README_files/figure-html/unnamed-chunk-3-2.png)<!-- -->
 
 ```r
-# checking serial correlation 
+# checking serial correlation
 ACF(fitlme)
 ```
 
@@ -219,7 +135,7 @@ ACF(fitlme)
 ```r
 # using AR(1) with nlme
 #fitlmeAR1 <- update(fitlme, correlation = corAR1())
-fitlmeAR1 <- update(fitlme, correlation = corAR1(), control = 
+fitlmeAR1 <- update(fitlme, correlation = corAR1(), control =
                       lmeControl(maxIter = 200, msMaxIter = 200, msMaxEval = 100))
 
 fitlmeAR1
@@ -342,7 +258,7 @@ fit_ssl <- smsn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
                     formRandom = ~Dayst, groupVar = "Subject", distr = "ssl",
                     control = lmmControl(quiet=TRUE))
 
-bind_rows(fit_sl$theta, fit_ssl$theta) 
+bind_rows(fit_sl$theta, fit_ssl$theta)
 ```
 
 ```
@@ -375,7 +291,7 @@ lr.test(fit_sl, fit_ssl)
 ```
 
 ```r
-# changing the dependence structure 
+# changing the dependence structure
 fit_sl_ar1 <- update(fit_sl, depStruct = "ARp", pAR=1)
 fit_sl_ar2 <- update(fit_sl, depStruct = "ARp", pAR=2)
 
@@ -418,7 +334,7 @@ bind_rows(fit_sl_ar2$theta,fit_sl_ar2$std.error)
 ```
 
 ```r
-# plotting the residual autocorrelation 
+# plotting the residual autocorrelation
 grid.arrange(plot(acfresid(fit_sl, calcCI = TRUE, maxLag = 5)),
              plot(acfresid(fit_sl_ar1, calcCI = TRUE, maxLag = 5)), nrow=1)
 ```
@@ -474,8 +390,8 @@ plot(mahalDist(fit_sl_ar1), nlabels = 2)
 ![](README_files/figure-html/unnamed-chunk-3-6.png)<!-- -->
 
 ```r
-qplot(mahalDist(fit_sl_ar1), fit_sl_ar1$uhat, #weights resulting from the estimation 
-      shape=I(1)) + 
+qplot(mahalDist(fit_sl_ar1), fit_sl_ar1$uhat, #weights resulting from the estimation
+      shape=I(1)) +
   geom_point(shape=1)+ theme_minimal() +
   ylab("weight") + xlab("Mahalanobis distance")
 ```
@@ -530,10 +446,10 @@ data_pred
 ```
 
 ```r
-tibble(select(sleepstudy, Subject, Dayst, Reaction), fitted = fitted(fit_sl_ar1)) %>% 
-  bind_rows(data_pred) %>% 
-  subset(Subject %in% sample_subjects) %>% 
-  ggplot(aes(x=Dayst,y=Reaction,color=Subject)) + 
+tibble(select(sleepstudy, Subject, Dayst, Reaction), fitted = fitted(fit_sl_ar1)) %>%
+  bind_rows(data_pred) %>%
+  subset(Subject %in% sample_subjects) %>%
+  ggplot(aes(x=Dayst,y=Reaction,color=Subject)) +
   geom_point() +
   geom_line(aes(x=Dayst,y=fitted), linetype="dashed") +
   ylab("reaction time")+ xlab("days")+ theme_minimal()
@@ -569,7 +485,7 @@ lr.test(fit_sl_ar1, fit_sl_ar1D)
 
 ```r
 # setting lambda2 to 0
-fit_ssl1 <- update(fit_ssl, skewind = c(1, 0), 
+fit_ssl1 <- update(fit_ssl, skewind = c(1, 0),
                    control = lmmControl(algorithm = "EM"))
 ```
 
@@ -659,10 +575,10 @@ criteria(list(fit_sl, fit_ssl1, fit_ssl)) %>% kable()
 fit_slEM <- update(fit_sl, control = lmmControl(algorithm = "EM", quiet = TRUE))
 
 lltrack <- bind_rows(tibble(iter = seq_along(fit_slEM$loglik.track),
-                            ll = fit_slEM$loglik.track), 
-                     tibble(iter = seq_along(fit_sl$loglik.track), 
+                            ll = fit_slEM$loglik.track),
+                     tibble(iter = seq_along(fit_sl$loglik.track),
                             ll = fit_sl$loglik.track), .id = 'alg')
-lltrack %>% ggplot(aes(x = iter, y=ll, color=alg)) + 
+lltrack %>% ggplot(aes(x = iter, y=ll, color=alg)) +
   geom_line() + geom_point(size=.8) + theme_minimal()
 ```
 
@@ -670,14 +586,14 @@ lltrack %>% ggplot(aes(x = iter, y=ll, color=alg)) +
 
 ```r
 # not using the parallel computation
-fit_slseq <- update(fit_sl, control = lmmControl(parallelnu = FALSE, 
+fit_slseq <- update(fit_sl, control = lmmControl(parallelnu = FALSE,
                                                 parallelphi = FALSE,
                                                 quiet = TRUE))
 fit_slseq$elapsedTime
 ```
 
 ```
-## [1] 15.43547
+## [1] 14.94417
 ```
 
 ```r
@@ -685,7 +601,7 @@ fit_sl$elapsedTime
 ```
 
 ```
-## [1] 15.9116
+## [1] 15.63276
 ```
 
 ```r
