@@ -1,0 +1,190 @@
+############################################################################################
+# options to install the package
+
+# devtools::install_github("fernandalschumacher/skewlmm")
+# install.packages("skewlmm")
+
+############################################################################################
+# loading all the packages that we will use
+
+library(tidyverse)
+library(skewlmm)
+library(nlme)
+library(lme4)
+library(gridExtra)
+library(knitr)
+
+############################################################################################
+# sleepstudy data
+
+# The average reaction time per day for subjects was evaluated by Gregory et al. (2003) 
+# in a sleep deprivation study. On day 0 the subjects had their normal amount of sleep 
+# and starting that night they were restricted to 3 hours of sleep per night for 9 days, 
+# and the reaction time basead on a series of tests was measured on each day for each subject. 
+# The data are avaliable at the R package lme4.
+
+data("sleepstudy",package = "lme4")
+sleepstudy %>% glimpse()
+
+# centering time in 0 and excluding the first 2 days 
+sleepstudy <- subset(sleepstudy,Days>=2) %>% transform(Dayst = Days - 5.5)
+
+ggplot(sleepstudy,aes(x=Days,y=Reaction,group=Subject)) + geom_line(alpha=.4) + 
+  stat_summary(aes(group = 1),geom = "line", fun= mean, colour=1,size=1) +
+  scale_x_continuous()+ylab("reaction time")+xlab("days")+
+  theme_minimal()
+
+############################################################################################
+# initial fit: using lme from package nlme (normal distribution)
+fitlme <- lme(Reaction~Dayst,data=sleepstudy,random=~Dayst|Subject)
+fitlme
+
+# plotting the estimated random effects
+g1<-nlme::ranef(fitlme) %>% dplyr::rename(`intercepts`=`(Intercept)`,`slopes`=Dayst) %>% 
+  pivot_longer(cols = everything()) %>% 
+  ggplot(aes(x=value))+ 
+  geom_histogram(bins=7,aes(y=..density..)) +
+  theme_minimal()+ 
+  facet_wrap(~name,scales = "free")+xlab('')+ylab('density') 
+
+g2<-nlme::ranef(fitlme) %>% dplyr::rename(`intercepts`=`(Intercept)`, `slopes`=Dayst) %>% 
+  pivot_longer(cols = everything()) %>% 
+  ggplot(aes(sample=value))+
+  geom_qq() + geom_qq_line()+
+  facet_wrap(~name,scales = 'free')+theme_minimal()
+
+gridExtra::grid.arrange(g1,g2,ncol=1)
+
+# checking serial correlation 
+ACF(fitlme)
+
+# using AR(1) with nlme
+fitlmeAR1 <- update(fitlme, correlation = corAR1())
+fitlmeAR1 <- update(fitlme, correlation = corAR1(), control = 
+                      lmeControl(maxIter = 200, msMaxIter = 200, msMaxEval = 100))
+
+fitlmeAR1
+
+anova(fitlmeAR1, fitlme)
+
+plot(fitlmeAR1)
+
+############################################################################################
+# using the package skewlmm
+
+fit_norm <- smn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
+                    formRandom = ~Dayst, groupVar = "Subject")
+fit_norm
+summary(fitlme)$tTable
+summary(fit_norm)$tableFixed
+
+# changing the distribution
+
+fit_sl <- update(object = fit_norm, distr = "sl", control = 
+                   lmmControl(showCriterium = TRUE))
+
+# assessing the goodness of fit using a Healy-type plot
+grid.arrange(healy.plot(fit_norm, calcCI = TRUE),
+             healy.plot(fit_sl, calcCI = TRUE), nrow=1)
+
+
+# using the skewed model
+fit_ssl <- smsn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
+                    formRandom = ~Dayst, groupVar = "Subject",
+                    distr = "ssl", control = lmmControl(showCriterium = TRUE))
+
+bind_rows(fit_sl$theta, fit_ssl$theta) 
+lr.test(fit_sl, fit_ssl)
+
+# plotting the residual autocorrelation
+acfresid(fit_sl, calcCI = TRUE, maxLag = 5) %>% plot()
+
+# changing the dependence structure 
+fit_sl_ar1 <- update(fit_sl, depStruct = "ARp", pAR=1)
+fit_sl_ar2 <- update(fit_sl, depStruct = "ARp", pAR=2)
+
+# comparing the model criteria
+criteria(list(norm = fit_norm ,sl = fit_sl, sl_AR1 = fit_sl_ar1,
+              sl_AR2 = fit_sl_ar2)) %>% kable()
+
+bind_rows(fit_sl_ar1$theta,fit_sl_ar1$std.error)
+bind_rows(fit_sl_ar2$theta,fit_sl_ar2$std.error)
+
+# plotting the residual autocorrelation 
+grid.arrange(plot(acfresid(fit_sl, calcCI = TRUE, maxLag = 5)),
+             plot(acfresid(fit_sl_ar1, calcCI = TRUE, maxLag = 5)), nrow=1)
+
+# evaluating the fitted AR(1)-SL-LMM
+summary(fit_sl_ar1)
+
+# Mahalanobis distance
+plot(mahalDist(fit_sl_ar1), nlabels = 2)
+
+qplot(mahalDist(fit_sl_ar1), fit_sl_ar1$uhat, #weights resulting from the estimation 
+      shape=I(1)) + 
+  geom_point(shape=1)+ theme_minimal() +
+  ylab("weight") + xlab("Mahalanobis distance")
+
+# residuals plot
+plot(fit_sl_ar1,type = "normalized")
+
+############################################################################################
+# bootstrap CI
+boot_sl_ar1 <- boot_par(fit_sl_ar1, B=14)
+boot_ci(boot_sl_ar1) %>% kable(digits=2)
+
+############################################################################################
+# prediction
+set.seed(6655)
+sample_subjects <- sample(unique(sleepstudy$Subject), 3, replace = FALSE)
+data_pred <- data.frame(Dayst = 4.5, Subject = sample_subjects)
+data_pred <- predict(fit_sl_ar1, newData = data_pred)
+names(sleepstudy)
+colnames(data_pred) <- c("Subject", "Dayst", "fitted")
+data_pred
+
+
+tibble(select(sleepstudy, Subject, Dayst, Reaction), fitted = fitted(fit_sl_ar1)) %>% 
+  bind_rows(data_pred) %>% 
+  subset(Subject %in% sample_subjects) %>% 
+  ggplot(aes(x=Dayst,y=Reaction,color=Subject)) + 
+  geom_point() +
+  geom_line(aes(x=Dayst,y=fitted), linetype="dashed") +
+  ylab("reaction time")+ xlab("days")+ theme_minimal()
+
+
+############################################################################################
+# extra options
+
+# D diagonal
+fit_sl_ar1D <- update(fit_sl_ar1, covRandom = "pdDiag")
+lr.test(fit_sl_ar1, fit_sl_ar1D)
+
+# setting lambda2 to 0
+fit_ssl1 <- update(fit_ssl, skewind = c(1, 0), 
+                   control = lmmControl(algorithm = "EM", showCriterium = TRUE))
+lr.test(fit_ssl1, fit_sl)
+
+bind_rows(fit_sl$theta, fit_ssl1$theta, fit_ssl$theta)
+criteria(list(fit_sl, fit_ssl1, fit_ssl)) %>% kable()
+
+# changing the algorithm
+fit_slEM <- update(fit_sl, control = lmmControl(algorithm = "EM", showCriterium = TRUE))
+
+lltrack <- bind_rows(tibble(iter = seq_along(fit_slEM$loglik.track),
+                            ll = fit_slEM$loglik.track), 
+                     tibble(iter = seq_along(fit_sl$loglik.track), 
+                            ll = fit_sl$loglik.track), .id = 'alg')
+lltrack %>% ggplot(aes(x = iter, y=ll, color=alg)) + 
+  geom_line() + geom_point(size=.8) + theme_minimal()
+
+# not using the parallel computation
+fit_slseq <- update(fit_sl, control = lmmControl(parallelnu = FALSE, 
+                                                parallelphi = FALSE,
+                                                showCriterium = TRUE))
+fit_slseq$elapsedTime
+fit_sl$elapsedTime
+
+# changing initial values
+fit_sl2 <- update(fit_sl, control = lmmControl(initialValues = list(nu = 1)))
+
