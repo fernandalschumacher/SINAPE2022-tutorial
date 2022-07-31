@@ -1,7 +1,9 @@
 ---
-title: "Modeling Longitudinal Data using Robust Mixed Models in R"
+title: "Tutorial: Modeling Longitudinal Data using Robust Mixed Models in R"
 author: "Fernanda Lang Schumacher, Larissa Avila Matos, Victor Hugo Lachos"
-output: html_document
+output: 
+  html_document:
+    keep_md: TRUE
 date: "2022-07-31"
 ---
 
@@ -98,7 +100,8 @@ plot(fitlmeAR1)
 # using the package skewlmm
 
 fit_norm <- smn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
-                    formRandom = ~Dayst, groupVar = "Subject")
+                    formRandom = ~Dayst, groupVar = "Subject",
+                    control = lmmControl(quiet=TRUE))
 fit_norm
 summary(fitlme)$tTable
 summary(fit_norm)$tableFixed
@@ -114,7 +117,8 @@ grid.arrange(healy.plot(fit_norm, calcCI = TRUE),
 
 # using the skewed model
 fit_ssl <- smsn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
-                    formRandom = ~Dayst, groupVar = "Subject", distr = "ssl")
+                    formRandom = ~Dayst, groupVar = "Subject", distr = "ssl",
+                    control = lmmControl(quiet=TRUE))
 
 bind_rows(fit_sl$theta, fit_ssl$theta) 
 lr.test(fit_sl, fit_ssl)
@@ -189,7 +193,7 @@ bind_rows(fit_sl$theta, fit_ssl1$theta, fit_ssl$theta)
 criteria(list(fit_sl, fit_ssl1, fit_ssl)) %>% kable()
 
 # changing the algorithm
-fit_slEM <- update(fit_sl, control = lmmControl(algorithm = "EM", showCriterium = TRUE))
+fit_slEM <- update(fit_sl, control = lmmControl(algorithm = "EM", quiet = TRUE))
 
 lltrack <- bind_rows(tibble(iter = seq_along(fit_slEM$loglik.track),
                             ll = fit_slEM$loglik.track), 
@@ -200,12 +204,14 @@ lltrack %>% ggplot(aes(x = iter, y=ll, color=alg)) +
 
 # not using the parallel computation
 fit_slseq <- update(fit_sl, control = lmmControl(parallelnu = FALSE, 
-                                                parallelphi = FALSE))
+                                                parallelphi = FALSE,
+                                                quiet = TRUE))
 fit_slseq$elapsedTime
 fit_sl$elapsedTime
 
 # changing initial values
-fit_sl2 <- update(fit_sl, control = lmmControl(initialValues = list(nu = 1)))
+fit_sl2 <- update(fit_sl, control = lmmControl(initialValues = list(nu = 1),
+                                               quiet = TRUE))
 
 
 ```
