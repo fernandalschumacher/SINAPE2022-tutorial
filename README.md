@@ -1,102 +1,99 @@
 ---
-title: "Modeling Longitudinal Data using Robust Mixed Models in R"
-author: "Fernanda Lang Schumacher, Larissa Avila Matos, Victor Hugo Lachos"
 output: 
   html_document:
     keep_md: TRUE
-date: "2022-07-31"
 ---
 
 
 
+Tutorial: Modeling Longitudinal Data using Robust Mixed Models in R
+
+Authors: Fernanda Lang Schumacher, Larissa Avila Matos, and Victor Hugo Lachos
+
 
 ```
-## Warning: package 'tidyverse' was built under R version 4.1.3
-```
-
-```
-## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
-```
-
-```
-## v ggplot2 3.3.5     v purrr   0.3.4
-## v tibble  3.1.6     v dplyr   1.0.7
-## v tidyr   1.1.4     v stringr 1.4.0
-## v readr   2.1.1     v forcats 0.5.1
+FALSE -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
 ```
 
 ```
-## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()
+FALSE v ggplot2 3.3.5     v purrr   0.3.4
+FALSE v tibble  3.1.6     v dplyr   1.0.7
+FALSE v tidyr   1.1.4     v stringr 1.4.0
+FALSE v readr   2.1.1     v forcats 0.5.1
 ```
 
 ```
-## Carregando pacotes exigidos: optimParallel
+FALSE -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+FALSE x dplyr::filter() masks stats::filter()
+FALSE x dplyr::lag()    masks stats::lag()
 ```
 
 ```
-## Carregando pacotes exigidos: parallel
+FALSE Carregando pacotes exigidos: optimParallel
 ```
 
 ```
-## 
-## Attaching package: 'nlme'
+FALSE Carregando pacotes exigidos: parallel
 ```
 
 ```
-## The following object is masked from 'package:skewlmm':
-## 
-##     ranef
+FALSE 
+FALSE Attaching package: 'nlme'
 ```
 
 ```
-## The following object is masked from 'package:dplyr':
-## 
-##     collapse
+FALSE The following object is masked from 'package:skewlmm':
+FALSE 
+FALSE     ranef
 ```
 
 ```
-## Carregando pacotes exigidos: Matrix
+FALSE The following object is masked from 'package:dplyr':
+FALSE 
+FALSE     collapse
 ```
 
 ```
-## 
-## Attaching package: 'Matrix'
+FALSE Carregando pacotes exigidos: Matrix
 ```
 
 ```
-## The following objects are masked from 'package:tidyr':
-## 
-##     expand, pack, unpack
+FALSE 
+FALSE Attaching package: 'Matrix'
 ```
 
 ```
-## 
-## Attaching package: 'lme4'
+FALSE The following objects are masked from 'package:tidyr':
+FALSE 
+FALSE     expand, pack, unpack
 ```
 
 ```
-## The following object is masked from 'package:nlme':
-## 
-##     lmList
+FALSE 
+FALSE Attaching package: 'lme4'
 ```
 
 ```
-## The following object is masked from 'package:skewlmm':
-## 
-##     ranef
+FALSE The following object is masked from 'package:nlme':
+FALSE 
+FALSE     lmList
 ```
 
 ```
-## 
-## Attaching package: 'gridExtra'
+FALSE The following object is masked from 'package:skewlmm':
+FALSE 
+FALSE     ranef
 ```
 
 ```
-## The following object is masked from 'package:dplyr':
-## 
-##     combine
+FALSE 
+FALSE Attaching package: 'gridExtra'
+```
+
+```
+FALSE The following object is masked from 'package:dplyr':
+FALSE 
+FALSE     combine
 ```
 
 
@@ -274,23 +271,8 @@ plot(fitlmeAR1)
 # using the package skewlmm
 
 fit_norm <- smn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
-                    formRandom = ~Dayst, groupVar = "Subject")
-```
-
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-```
-
-```r
+                    formRandom = ~Dayst, groupVar = "Subject",
+                    control = lmmControl(quiet=TRUE))
 fit_norm
 ```
 
@@ -298,7 +280,7 @@ fit_norm
 ## Linear mixed models with distribution norm and dependency structure UNC 
 ## Call:
 ## smn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst, groupVar = "Subject", 
-##     formRandom = ~Dayst)
+##     formRandom = ~Dayst, control = lmmControl(quiet = TRUE))
 ## 
 ## Fixed: Reaction ~ Dayst
 ## Random:
@@ -346,52 +328,7 @@ summary(fit_norm)$tableFixed
 # changing the distribution
 
 fit_sl <- update(object = fit_norm, distr = "sl")
-```
 
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-Iteration  11 
-Iteration  12 
-Iteration  13 
-Iteration  14 
-Iteration  15 
-Iteration  16 
-Iteration  17 
-Iteration  18 
-Iteration  19 
-Iteration  20 
-Iteration  21 
-Iteration  22 
-Iteration  23 
-Iteration  24 
-Iteration  25 
-Iteration  26 
-Iteration  27 
-Iteration  28 
-Iteration  29 
-Iteration  30 
-Iteration  31 
-Iteration  32 
-Iteration  33 
-Iteration  34 
-Iteration  35 
-Iteration  36 
-Iteration  37 
-Iteration  38 
-Iteration  39 
-Iteration  40 
-```
-
-```r
 # assessing the goodness of fit using a Healy-type plot
 grid.arrange(healy.plot(fit_norm, calcCI = TRUE),
              healy.plot(fit_sl, calcCI = TRUE), nrow=1)
@@ -402,42 +339,9 @@ grid.arrange(healy.plot(fit_norm, calcCI = TRUE),
 ```r
 # using the skewed model
 fit_ssl <- smsn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
-                    formRandom = ~Dayst, groupVar = "Subject", distr = "ssl")
-```
+                    formRandom = ~Dayst, groupVar = "Subject", distr = "ssl",
+                    control = lmmControl(quiet=TRUE))
 
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-Iteration  11 
-Iteration  12 
-Iteration  13 
-Iteration  14 
-Iteration  15 
-Iteration  16 
-Iteration  17 
-Iteration  18 
-Iteration  19 
-Iteration  20 
-Iteration  21 
-Iteration  22 
-Iteration  23 
-Iteration  24 
-Iteration  25 
-Iteration  26 
-Iteration  27 
-Iteration  28 
-Iteration  29 
-```
-
-```r
 bind_rows(fit_sl$theta, fit_ssl$theta) 
 ```
 
@@ -473,76 +377,8 @@ lr.test(fit_sl, fit_ssl)
 ```r
 # changing the dependence structure 
 fit_sl_ar1 <- update(fit_sl, depStruct = "ARp", pAR=1)
-```
-
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-Iteration  11 
-Iteration  12 
-Iteration  13 
-Iteration  14 
-Iteration  15 
-Iteration  16 
-Iteration  17 
-Iteration  18 
-Iteration  19 
-Iteration  20 
-Iteration  21 
-Iteration  22 
-Iteration  23 
-```
-
-```r
 fit_sl_ar2 <- update(fit_sl, depStruct = "ARp", pAR=2)
-```
 
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-Iteration  11 
-Iteration  12 
-Iteration  13 
-Iteration  14 
-Iteration  15 
-Iteration  16 
-Iteration  17 
-Iteration  18 
-Iteration  19 
-Iteration  20 
-Iteration  21 
-Iteration  22 
-Iteration  23 
-Iteration  24 
-Iteration  25 
-Iteration  26 
-Iteration  27 
-Iteration  28 
-Iteration  29 
-Iteration  30 
-Iteration  31 
-Iteration  32 
-Iteration  33 
-Iteration  34 
-```
-
-```r
 # comparing the model criteria
 criteria(list(norm = fit_norm ,sl = fit_sl, sl_AR1 = fit_sl_ar1,
               sl_AR2 = fit_sl_ar2)) %>% kable()
@@ -598,7 +434,8 @@ summary(fit_sl_ar1)
 ## Linear mixed models with distribution sl and dependency structure ARp 
 ## Call:
 ## smn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst, groupVar = "Subject", 
-##     formRandom = ~Dayst, depStruct = "ARp", distr = "sl", pAR = 1)
+##     formRandom = ~Dayst, depStruct = "ARp", distr = "sl", pAR = 1, 
+##     control = lmmControl(quiet = TRUE))
 ## 
 ## Distribution sl with nu = 1.223598 
 ## 
@@ -702,10 +539,6 @@ tibble(select(sleepstudy, Subject, Dayst, Reaction), fitted = fitted(fit_sl_ar1)
   ylab("reaction time")+ xlab("days")+ theme_minimal()
 ```
 
-```
-## Warning: Removed 3 rows containing missing values (geom_point).
-```
-
 ![](README_files/figure-html/unnamed-chunk-3-9.png)<!-- -->
 
 ```r
@@ -714,35 +547,6 @@ tibble(select(sleepstudy, Subject, Dayst, Reaction), fitted = fitted(fit_sl_ar1)
 
 # D diagonal
 fit_sl_ar1D <- update(fit_sl_ar1, covRandom = "pdDiag")
-```
-
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-Iteration  11 
-Iteration  12 
-Iteration  13 
-Iteration  14 
-Iteration  15 
-Iteration  16 
-Iteration  17 
-Iteration  18 
-Iteration  19 
-Iteration  20 
-Iteration  21 
-Iteration  22 
-Iteration  23 
-```
-
-```r
 lr.test(fit_sl_ar1, fit_sl_ar1D)
 ```
 
@@ -852,83 +656,8 @@ criteria(list(fit_sl, fit_ssl1, fit_ssl)) %>% kable()
 
 ```r
 # changing the algorithm
-fit_slEM <- update(fit_sl, control = lmmControl(algorithm = "EM", showCriterium = TRUE))
-```
+fit_slEM <- update(fit_sl, control = lmmControl(algorithm = "EM", quiet = TRUE))
 
-```
-## Iteration  1  of  300  - criterium = 10  - loglik = -696.2839 
-Iteration  2  of  300  - criterium = 10  - loglik = -691.6709 
-Iteration  3  of  300  - criterium = 0.003578158  - loglik = -689.196 
-Iteration  4  of  300  - criterium = 0.001946682  - loglik = -687.8544 
-Iteration  5  of  300  - criterium = 0.001111017  - loglik = -687.0902 
-Iteration  6  of  300  - criterium = 0.0006691838  - loglik = -686.6304 
-Iteration  7  of  300  - criterium = 0.000422071  - loglik = -686.3406 
-Iteration  8  of  300  - criterium = 0.000275332  - loglik = -686.1516 
-Iteration  9  of  300  - criterium = 0.0001838719  - loglik = -686.0254 
-Iteration  10  of  300  - criterium = 0.0001249397  - loglik = -685.9397 
-Iteration  11  of  300  - criterium = 8.612254e-05  - loglik = -685.8807 
-Iteration  12  of  300  - criterium = 6.01739e-05  - loglik = -685.8394 
-Iteration  13  of  300  - criterium = 4.264313e-05  - loglik = -685.8101 
-Iteration  14  of  300  - criterium = 3.070222e-05  - loglik = -685.7891 
-Iteration  15  of  300  - criterium = 2.251383e-05  - loglik = -685.7736 
-Iteration  16  of  300  - criterium = 1.718316e-05  - loglik = -685.7619 
-Iteration  17  of  300  - criterium = 1.297007e-05  - loglik = -685.753 
-Iteration  18  of  300  - criterium = 1.022264e-05  - loglik = -685.746 
-Iteration  19  of  300  - criterium = 7.886277e-06  - loglik = -685.7405 
-Iteration  20  of  300  - criterium = 6.891861e-06  - loglik = -685.7358 
-Iteration  21  of  300  - criterium = 5.908653e-06  - loglik = -685.7318 
-Iteration  22  of  300  - criterium = 5.194145e-06  - loglik = -685.7282 
-Iteration  23  of  300  - criterium = 4.66678e-06  - loglik = -685.725 
-Iteration  24  of  300  - criterium = 4.27022e-06  - loglik = -685.7221 
-Iteration  25  of  300  - criterium = 3.965458e-06  - loglik = -685.7194 
-Iteration  26  of  300  - criterium = 3.725423e-06  - loglik = -685.7168 
-Iteration  27  of  300  - criterium = 3.531291e-06  - loglik = -685.7144 
-Iteration  28  of  300  - criterium = 3.369946e-06  - loglik = -685.7121 
-Iteration  29  of  300  - criterium = 3.23223e-06  - loglik = -685.7099 
-Iteration  30  of  300  - criterium = 3.111734e-06  - loglik = -685.7077 
-Iteration  31  of  300  - criterium = 3.003965e-06  - loglik = -685.7057 
-Iteration  32  of  300  - criterium = 2.90576e-06  - loglik = -685.7037 
-Iteration  33  of  300  - criterium = 2.814891e-06  - loglik = -685.7017 
-Iteration  34  of  300  - criterium = 2.729771e-06  - loglik = -685.6999 
-Iteration  35  of  300  - criterium = 2.649289e-06  - loglik = -685.6981 
-Iteration  36  of  300  - criterium = 2.572628e-06  - loglik = -685.6963 
-Iteration  37  of  300  - criterium = 2.499209e-06  - loglik = -685.6946 
-Iteration  38  of  300  - criterium = 2.428605e-06  - loglik = -685.6929 
-Iteration  39  of  300  - criterium = 2.360504e-06  - loglik = -685.6913 
-Iteration  40  of  300  - criterium = 2.29467e-06  - loglik = -685.6897 
-Iteration  41  of  300  - criterium = 2.230923e-06  - loglik = -685.6882 
-Iteration  42  of  300  - criterium = 2.169123e-06  - loglik = -685.6867 
-Iteration  43  of  300  - criterium = 2.109158e-06  - loglik = -685.6853 
-Iteration  44  of  300  - criterium = 2.050936e-06  - loglik = -685.6838 
-Iteration  45  of  300  - criterium = 1.994379e-06  - loglik = -685.6825 
-Iteration  46  of  300  - criterium = 1.939422e-06  - loglik = -685.6811 
-Iteration  47  of  300  - criterium = 1.886006e-06  - loglik = -685.6799 
-Iteration  48  of  300  - criterium = 1.834077e-06  - loglik = -685.6786 
-Iteration  49  of  300  - criterium = 1.783589e-06  - loglik = -685.6774 
-Iteration  50  of  300  - criterium = 1.734495e-06  - loglik = -685.6762 
-Iteration  51  of  300  - criterium = 1.686756e-06  - loglik = -685.675 
-Iteration  52  of  300  - criterium = 1.64033e-06  - loglik = -685.6739 
-Iteration  53  of  300  - criterium = 1.59518e-06  - loglik = -685.6728 
-Iteration  54  of  300  - criterium = 1.551271e-06  - loglik = -685.6717 
-Iteration  55  of  300  - criterium = 1.508567e-06  - loglik = -685.6707 
-Iteration  56  of  300  - criterium = 1.467035e-06  - loglik = -685.6697 
-Iteration  57  of  300  - criterium = 1.426642e-06  - loglik = -685.6687 
-Iteration  58  of  300  - criterium = 1.387358e-06  - loglik = -685.6678 
-Iteration  59  of  300  - criterium = 1.349151e-06  - loglik = -685.6669 
-Iteration  60  of  300  - criterium = 1.311993e-06  - loglik = -685.666 
-Iteration  61  of  300  - criterium = 1.275855e-06  - loglik = -685.6651 
-Iteration  62  of  300  - criterium = 1.240708e-06  - loglik = -685.6642 
-Iteration  63  of  300  - criterium = 1.206527e-06  - loglik = -685.6634 
-Iteration  64  of  300  - criterium = 1.173283e-06  - loglik = -685.6626 
-Iteration  65  of  300  - criterium = 1.140953e-06  - loglik = -685.6618 
-Iteration  66  of  300  - criterium = 1.109511e-06  - loglik = -685.6611 
-Iteration  67  of  300  - criterium = 1.078933e-06  - loglik = -685.6603 
-Iteration  68  of  300  - criterium = 1.049195e-06  - loglik = -685.6596 
-Iteration  69  of  300  - criterium = 1.020274e-06  - loglik = -685.6589 
-Iteration  70  of  300  - criterium = 9.921484e-07  - loglik = -685.6582 
-```
-
-```r
 lltrack <- bind_rows(tibble(iter = seq_along(fit_slEM$loglik.track),
                             ll = fit_slEM$loglik.track), 
                      tibble(iter = seq_along(fit_sl$loglik.track), 
@@ -942,58 +671,13 @@ lltrack %>% ggplot(aes(x = iter, y=ll, color=alg)) +
 ```r
 # not using the parallel computation
 fit_slseq <- update(fit_sl, control = lmmControl(parallelnu = FALSE, 
-                                                parallelphi = FALSE))
-```
-
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-Iteration  11 
-Iteration  12 
-Iteration  13 
-Iteration  14 
-Iteration  15 
-Iteration  16 
-Iteration  17 
-Iteration  18 
-Iteration  19 
-Iteration  20 
-Iteration  21 
-Iteration  22 
-Iteration  23 
-Iteration  24 
-Iteration  25 
-Iteration  26 
-Iteration  27 
-Iteration  28 
-Iteration  29 
-Iteration  30 
-Iteration  31 
-Iteration  32 
-Iteration  33 
-Iteration  34 
-Iteration  35 
-Iteration  36 
-Iteration  37 
-Iteration  38 
-Iteration  39 
-Iteration  40 
-```
-
-```r
+                                                parallelphi = FALSE,
+                                                quiet = TRUE))
 fit_slseq$elapsedTime
 ```
 
 ```
-## [1] 23.81242
+## [1] 15.43547
 ```
 
 ```r
@@ -1001,51 +685,12 @@ fit_sl$elapsedTime
 ```
 
 ```
-## [1] 15.68833
+## [1] 15.9116
 ```
 
 ```r
 # changing initial values
-fit_sl2 <- update(fit_sl, control = lmmControl(initialValues = list(nu = 1)))
-```
-
-```
-## Iteration  1 
-Iteration  2 
-Iteration  3 
-Iteration  4 
-Iteration  5 
-Iteration  6 
-Iteration  7 
-Iteration  8 
-Iteration  9 
-Iteration  10 
-Iteration  11 
-Iteration  12 
-Iteration  13 
-Iteration  14 
-Iteration  15 
-Iteration  16 
-Iteration  17 
-Iteration  18 
-Iteration  19 
-Iteration  20 
-Iteration  21 
-Iteration  22 
-Iteration  23 
-Iteration  24 
-Iteration  25 
-Iteration  26 
-Iteration  27 
-Iteration  28 
-Iteration  29 
-Iteration  30 
-Iteration  31 
-Iteration  32 
-Iteration  33 
-Iteration  34 
-Iteration  35 
-Iteration  36 
-Iteration  37 
+fit_sl2 <- update(fit_sl, control = lmmControl(initialValues = list(nu = 1),
+                                               quiet = TRUE))
 ```
 

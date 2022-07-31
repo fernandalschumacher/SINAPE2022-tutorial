@@ -1,17 +1,18 @@
 ---
-title: "Tutorial: Modeling Longitudinal Data using Robust Mixed Models in R"
-author: "Fernanda Lang Schumacher, Larissa Avila Matos, Victor Hugo Lachos"
 output: 
   html_document:
     keep_md: TRUE
-date: "2022-07-31"
 ---
 
 ```{r setup, include=FALSE, warning=FALSE, error=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, error=FALSE)
 ```
 
-```{r, echo=FALSE, results=FALSE}
+Tutorial: Modeling Longitudinal Data using Robust Mixed Models in R
+
+Authors: Fernanda Lang Schumacher, Larissa Avila Matos, and Victor Hugo Lachos
+
+```{r, echo=FALSE, results=FALSE, cache=FALSE, results=FALSE, warning=FALSE, comment=FALSE, warning=FALSE}
 library(tidyverse)
 library(skewlmm)
 library(nlme)
