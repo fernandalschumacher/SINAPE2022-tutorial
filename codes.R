@@ -96,9 +96,6 @@ fit_ssl <- smsn.lmm(data = sleepstudy, formFixed = Reaction ~ Dayst,
 bind_rows(fit_sl$theta, fit_ssl$theta) 
 lr.test(fit_sl, fit_ssl)
 
-# plotting the residual autocorrelation
-acfresid(fit_sl, calcCI = TRUE, maxLag = 5) %>% plot()
-
 # changing the dependence structure 
 fit_sl_ar1 <- update(fit_sl, depStruct = "ARp", pAR=1)
 fit_sl_ar2 <- update(fit_sl, depStruct = "ARp", pAR=2)
